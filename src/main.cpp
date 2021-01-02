@@ -15,6 +15,9 @@ CRGB g_LEDs[NUM_LEDS] = {0};  // Frame buffer for FastLED
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED_DATA);
 // U8G2_SSD1306_128X64_NONAME_F_SW_I2C g_OLED(U8G2_R2, OLED_CLOCK, OLED_DATA, OLED_RESET);
 int g_lineHeight = 0;
+int g_Brightness = 2; // 0-255 brightness scale. do not go to big here, stay at 64 max;
+
+#include "marquee.h"
 
 // FramesPerSecond
 //
@@ -46,7 +49,7 @@ void setup() {
   g_lineHeight = g_OLED.getFontAscent() - g_OLED.getFontDescent();        // Descent is a negative number so we add it to the total
 
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(g_LEDs, NUM_LEDS);               // Add our LED strip to the FastLED library
-  FastLED.setBrightness(16);
+  FastLED.setBrightness(64);
 }
 
 void loop() {
@@ -55,8 +58,8 @@ void loop() {
   double fps = 0;
 
   uint8_t initialHue = 0;
-  const uint8_t deltaHue = 16;      // 255 colors in the color wheel, so go 16 at a time.
-  const uint8_t hueDensity = 4;     // 
+  const uint8_t deltaHue = 16;      // how fast the rainbow is going to scroll by
+  const uint8_t hueDensity = 4;     // 255 colors in the color wheel, so go 4 at a time.
 
  
   for (;;)
@@ -77,7 +80,10 @@ void loop() {
     // for (int i = 0; i < NUM_LEDS; i++) 
     //   g_LEDs[i] = CRGB::Red;
     // fill_solid(g_LEDs, NUM_LEDS, CRGB::Green);
-    fill_rainbow(g_LEDs, NUM_LEDS, initialHue += hueDensity, deltaHue);
+    // fill_rainbow(g_LEDs, NUM_LEDS, initialHue += hueDensity, deltaHue);
+    DrawMarquee();
+
+    FastLED.setBrightness(g_Brightness);
     FastLED.show();
 
     double dEnd = millis() / 1000.0;
