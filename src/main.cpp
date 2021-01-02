@@ -18,7 +18,8 @@ int g_lineHeight = 0;
 int g_Brightness = 2; // 0-255 brightness scale. do not go to big here, stay at 64 max;
 
 // #include "marquee.h"
-#include "twinkle.h"
+// #include "twinkle.h"
+#include "comet.h"
 
 // FramesPerSecond
 //
@@ -83,7 +84,8 @@ void loop() {
     // fill_solid(g_LEDs, NUM_LEDS, CRGB::Green);
     // fill_rainbow(g_LEDs, NUM_LEDS, initialHue += hueDensity, deltaHue);
     // DrawMarquee();
-    DrawTwinkle();
+    // DrawTwinkle();
+    DrawComet();
 
     FastLED.setBrightness(g_Brightness);
     FastLED.show();
