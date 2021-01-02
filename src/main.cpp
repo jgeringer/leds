@@ -17,7 +17,8 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED
 int g_lineHeight = 0;
 int g_Brightness = 2; // 0-255 brightness scale. do not go to big here, stay at 64 max;
 
-#include "marquee.h"
+// #include "marquee.h"
+#include "twinkle.h"
 
 // FramesPerSecond
 //
@@ -81,7 +82,8 @@ void loop() {
     //   g_LEDs[i] = CRGB::Red;
     // fill_solid(g_LEDs, NUM_LEDS, CRGB::Green);
     // fill_rainbow(g_LEDs, NUM_LEDS, initialHue += hueDensity, deltaHue);
-    DrawMarquee();
+    // DrawMarquee();
+    DrawTwinkle();
 
     FastLED.setBrightness(g_Brightness);
     FastLED.show();
