@@ -6,7 +6,7 @@ extern CRGB g_LEDs[];
 
 void DrawComet()
 {
-    FastLED.clear(false);
+    // FastLED.clear(false);
 
     const byte fadeAmt = 128;       // Fraction of 256 to fade pixel by if its chosen to be faded this pass
     const int cometSize = 5;        // Size of the comet in pixels
@@ -26,4 +26,7 @@ void DrawComet()
     // Draw the comet at its current position
     for (int i = 0; i < cometSize; i++)
         g_LEDs[iPos + 1].setHue(hue);
+
+    for (int j = 0; j < NUM_LEDS; j++)
+        g_LEDs[j] = g_LEDs[j].fadeToBlackBy(fadeAmt);
 }
