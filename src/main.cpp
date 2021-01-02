@@ -66,8 +66,8 @@ void loop() {
  
   for (;;)
   {
-    bLED = !bLED;                                                         // Blink the LED off and on  
-    digitalWrite(LED_BUILTIN, bLED);
+    // bLED = !bLED;                                                         // Blink the LED off and on  
+    // digitalWrite(LED_BUILTIN, bLED);
  
     double dStart = millis() / 1000.0;                                    // Display a frame and calc how long it takes
 
