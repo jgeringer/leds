@@ -15,7 +15,7 @@ CRGB g_LEDs[NUM_LEDS] = {0};  // Frame buffer for FastLED
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED_DATA);
 // U8G2_SSD1306_128X64_NONAME_F_SW_I2C g_OLED(U8G2_R2, OLED_CLOCK, OLED_DATA, OLED_RESET);
 int g_lineHeight = 0;
-int g_Brightness = 16; // 0-255 brightness scale. do not go to big here, stay at 64 max;
+int g_Brightness = 32; // 0-255 brightness scale. do not go to big here, stay at 64 max;
 
 // #include "marquee.h"
 // #include "twinkle.h"
@@ -73,10 +73,15 @@ void loop() {
 
     // Handle OLED drawing
 
-    g_OLED.clearBuffer();
-    g_OLED.setCursor(0, g_lineHeight);
-    g_OLED.printf("FPS: %.1lf", fps);
-    g_OLED.sendBuffer();
+    static unsigned long msLastUpdate = millis();
+    if (millis() - msLastUpdate > 250)
+    {
+      g_OLED.clearBuffer();
+      g_OLED.setCursor(0, g_lineHeight);
+      g_OLED.printf("FPS: %.1lf", fps);
+      g_OLED.sendBuffer();
+      msLastUpdate = millis();
+    }
 
     // Handle LEDs
     // for (int i = 0; i < NUM_LEDS; i++) 

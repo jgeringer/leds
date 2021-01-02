@@ -8,16 +8,16 @@ void DrawComet()
 {
     // FastLED.clear(false);
 
-    const byte fadeAmt = 128;       // Fraction of 256 to fade pixel by if its chosen to be faded this pass
+    const byte fadeAmt = 48;       // Fraction of 256 to fade pixel by if its chosen to be faded this pass
     const int cometSize = 5;        // Size of the comet in pixels
     const int deltaHue = 4;         // How far to step the cycling hue each draw call
-
+    static double cometSpeed = 0.5; // How far to advance the coment every frame
     static byte hue = HUE_RED;      // Current color
     static int iDirection = 1;      // Current direction (-1 or +1)
-    static int iPos = 0;            // Current comet position on strip
+    static double iPos = 0.0;       // Current comet position on strip
 
     hue += deltaHue;                // Update the comet color
-    iPos += iDirection;             // Update the comet position
+    iPos += iDirection * cometSpeed;// Update the comet position
 
     // Flip the comet direction when it hits either end
     if (iPos == (NUM_LEDS - cometSize) || iPos == 0)
@@ -25,8 +25,12 @@ void DrawComet()
 
     // Draw the comet at its current position
     for (int i = 0; i < cometSize; i++)
-        g_LEDs[iPos + 1].setHue(hue);
+        g_LEDs[(int)iPos + 1].setHue(hue);
 
+    // Fade the LEDs one step
     for (int j = 0; j < NUM_LEDS; j++)
-        g_LEDs[j] = g_LEDs[j].fadeToBlackBy(fadeAmt);
+        if (random(2) == 1)
+            g_LEDs[j] = g_LEDs[j].fadeToBlackBy(fadeAmt);
+
+    delay(20);
 }
