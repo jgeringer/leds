@@ -10,7 +10,7 @@ static const CRGB TwinkleColors [NUM_COLORS] =
     CRGB::Orange,
 };
 
-void DrawTwinkle()
+void DrawTwinkleOld()
 {
     FastLED.clear(false);                   // Clear the strip, but don't push out the bits quite yet.
 
@@ -20,4 +20,20 @@ void DrawTwinkle()
         FastLED.show(g_Brightness);
         delay(200);
     }
+}
+
+void DrawTwinkle()
+{
+    static int passCount = 0;
+    passCount++;
+
+    // Every time passCount hits a quarter of the LED total, we reset the strip
+    if (passCount == NUM_LEDS)
+    {
+        passCount = 0;
+        FastLED.clear(false);               // Clear the strip, but don't push out the bits quite yet.
+    }
+
+    g_LEDs[random(NUM_LEDS)] = TwinkleColors[random(NUM_COLORS)];
+    // delay(200);
 }
