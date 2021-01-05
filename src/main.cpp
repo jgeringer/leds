@@ -19,7 +19,8 @@ int g_Brightness = 64; // 0-255 brightness scale. do not go to big here, stay at
 
 // #include "marquee.h"
 // #include "twinkle.h"
-#include "comet.h"
+// #include "comet.h"
+#include "bounce.h"
 
 // FramesPerSecond
 //
@@ -52,33 +53,41 @@ void setup() {
 
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(g_LEDs, NUM_LEDS);               // Add our LED strip to the FastLED library
   FastLED.setBrightness(64);
+
+  FastLED.setMaxPowerInMilliWatts(450);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  bool bLED = 0;
+  // bool bLED = 0;
   double fps = 0;
 
-  uint8_t initialHue = 0;
-  const uint8_t deltaHue = 16;      // how fast the rainbow is going to scroll by
-  const uint8_t hueDensity = 4;     // 255 colors in the color wheel, so go 4 at a time.
+  BouncingBallEffect balls(NUM_LEDS, 6, 48, true);
+
+  // uint8_t initialHue = 0;
+  // const uint8_t deltaHue = 16;      // how fast the rainbow is going to scroll by
+  // const uint8_t hueDensity = 4;     // 255 colors in the color wheel, so go 4 at a time.
 
  
-  for (;;)
+  while (true)
   {
-    // bLED = !bLED;                                                         // Blink the LED off and on  
+    // bLED = !bLED;                                                                  // Blink the LED off and on  
     // digitalWrite(LED_BUILTIN, bLED);
  
-    double dStart = millis() / 1000.0;                                    // Display a frame and calc how long it takes
+    double dStart = millis() / 1000.0;                                                // Display a frame and calc how long it takes
 
     // Handle OLED drawing
+    
+    uint32_t milliwatts = calculate_unscaled_power_mW(g_LEDs, NUM_LEDS);              // How much power are we pulling?
 
     static unsigned long msLastUpdate = millis();
-    if (millis() - msLastUpdate > 250)
+    if (millis() - msLastUpdate > 100)
     {
       g_OLED.clearBuffer();
       g_OLED.setCursor(0, g_lineHeight);
       g_OLED.printf("FPS: %.1lf", fps);
+      g_OLED.setCursor(0, g_lineHeight * 2);
+      g_OLED.printf("Power: %u mW", milliwatts);
       g_OLED.sendBuffer();
       msLastUpdate = millis();
     }
@@ -90,7 +99,8 @@ void loop() {
     // fill_rainbow(g_LEDs, NUM_LEDS, initialHue += hueDensity, deltaHue);
     // DrawMarquee();
     // DrawTwinkle();
-    DrawComet();
+    // DrawComet();
+    balls.Draw();
 
     FastLED.setBrightness(g_Brightness);
     FastLED.show();
