@@ -15,12 +15,17 @@ CRGB g_LEDs[NUM_LEDS] = {0};  // Frame buffer for FastLED
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED_DATA);
 // U8G2_SSD1306_128X64_NONAME_F_SW_I2C g_OLED(U8G2_R2, OLED_CLOCK, OLED_DATA, OLED_RESET);
 int g_lineHeight = 0;
-int g_Brightness = 64; // 0-255 brightness scale. do not go to big here, stay at 64 max;
+int g_Brightness = 32;  // 0-255 brightness scale. do not go to big here, stay at 64 max;
+int g_PowerLimit = 900; // 900mW Power Limit
 
 // #include "marquee.h"
 // #include "twinkle.h"
 // #include "comet.h"
-#include "bounce.h"
+// #include "bounce.h"
+
+#define ARRAYSIZE(x) (sizeof(x)/sizeof(x[0]))             // Counts number of elements in a statically defined array
+#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)  // Should not be run more than 1000ms
+
 
 // FramesPerSecond
 //
@@ -54,58 +59,40 @@ void setup() {
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(g_LEDs, NUM_LEDS);               // Add our LED strip to the FastLED library
   FastLED.setBrightness(64);
 
-  FastLED.setMaxPowerInMilliWatts(450);
+  set_max_power_indicator_LED(LED_BUILTIN);                               // Light the builtin LED if we power throttle
+  FastLED.setMaxPowerInMilliWatts(g_PowerLimit);                          // Set the power limit, above which brightness will be throttled
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  // bool bLED = 0;
-  double fps = 0;
-
-  BouncingBallEffect balls(NUM_LEDS, 6, 48, true);
-
-  // uint8_t initialHue = 0;
-  // const uint8_t deltaHue = 16;      // how fast the rainbow is going to scroll by
-  // const uint8_t hueDensity = 4;     // 255 colors in the color wheel, so go 4 at a time.
-
- 
+  // put your main code here, to run repeatedly: 
   while (true)
   {
-    // bLED = !bLED;                                                                  // Blink the LED off and on  
-    // digitalWrite(LED_BUILTIN, bLED);
- 
-    double dStart = millis() / 1000.0;                                                // Display a frame and calc how long it takes
+
+    EVERY_N_MILLISECONDS(20)
+    {
+      fadeToBlackBy(g_LEDs, NUM_LEDS, 64);
+      int cometSize = 15;
+      int iPos = beatsin16(32, 0, NUM_LEDS-cometSize);
+      byte hue = beatsin8(10);  // 60 = once per second it'll cycle through the colors. 10 seems to bee chaning the color at each end of the strip
+      // fill_solid(&g_LEDs[iPos], cometSize, CRGB::DarkViolet);
+      for (int i = iPos; i < iPos + cometSize; i++)
+        g_LEDs[i] = CHSV(hue, 255, 255); // CRGB::DarkViolet;
+    }
 
     // Handle OLED drawing
-    
-    uint32_t milliwatts = calculate_unscaled_power_mW(g_LEDs, NUM_LEDS);              // How much power are we pulling?
-
-    static unsigned long msLastUpdate = millis();
-    if (millis() - msLastUpdate > 100)
+    EVERY_N_MILLISECONDS(250)
     {
       g_OLED.clearBuffer();
       g_OLED.setCursor(0, g_lineHeight);
-      g_OLED.printf("FPS: %.1lf", fps);
+      g_OLED.printf("FPS: %u", FastLED.getFPS());
       g_OLED.setCursor(0, g_lineHeight * 2);
-      g_OLED.printf("Power: %u mW", milliwatts);
+      g_OLED.printf("Power: %u mW", calculate_unscaled_power_mW(g_LEDs, NUM_LEDS));
+      g_OLED.setCursor(0, g_lineHeight * 3);
+      g_OLED.printf("Brite: %d", calculate_max_brightness_for_power_mW(g_Brightness, g_PowerLimit));
       g_OLED.sendBuffer();
-      msLastUpdate = millis();
     }
 
-    // Handle LEDs
-    // for (int i = 0; i < NUM_LEDS; i++) 
-    //   g_LEDs[i] = CRGB::Red;
-    // fill_solid(g_LEDs, NUM_LEDS, CRGB::Green);
-    // fill_rainbow(g_LEDs, NUM_LEDS, initialHue += hueDensity, deltaHue);
-    // DrawMarquee();
-    // DrawTwinkle();
-    // DrawComet();
-    balls.Draw();
-
-    FastLED.setBrightness(g_Brightness);
-    FastLED.show();
-
-    double dEnd = millis() / 1000.0;
-    fps = FramesPerSecond(dEnd - dStart);
+    FastLED.setBrightness(g_Brightness);  // Set the brightness scale
+    FastLED.delay(10);                    // Show and delay
   }
 }
