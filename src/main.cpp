@@ -15,7 +15,7 @@ CRGB g_LEDs[NUM_LEDS] = {0};  // Frame buffer for FastLED
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED_DATA);
 // U8G2_SSD1306_128X64_NONAME_F_SW_I2C g_OLED(U8G2_R2, OLED_CLOCK, OLED_DATA, OLED_RESET);
 int g_lineHeight = 0;
-int g_Brightness = 32;  // 0-255 brightness scale. do not go to big here, stay at 64 max;
+int g_Brightness = 32; // 32;  // 0-255 brightness scale. do not go to big here, stay at 64 max;
 int g_PowerLimit = 900; // 900mW Power Limit
 
 // #include "marquee.h"
@@ -26,39 +26,79 @@ int g_PowerLimit = 900; // 900mW Power Limit
 #define ARRAYSIZE(x) (sizeof(x)/sizeof(x[0]))             // Counts number of elements in a statically defined array
 #define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)  // Should not be run more than 1000ms
 
-
-// FramesPerSecond
+// FractionalColor
 //
-// Tracks a weighted average to smooth out the values that it calcs as the simple reciprocal
-// of the amount of time taken specified by the caller.  So 1/3 of a second is 3 fps, and it
-// will take up to 10 frames or so to stabilize on that value.
- 
-double FramesPerSecond(double seconds)
+// Returns a fraction of a color; abstracts the fadeToBlack out to this function in case we 
+// want to improve the color math or do color correction all in one location at a later date.
+
+CRGB ColorFraction(CRGB colorIn, float fraction)
 {
-  static double framesPerSecond; 
-  framesPerSecond = (framesPerSecond * .9) + (1.0 / seconds * .1);
-  return framesPerSecond;
+  fraction = min(1.0f, fraction);
+  return CRGB(colorIn).fadeToBlackBy(255 * (1.0f - fraction));
 }
 
-void setup() {
-  // put your setup code here, to run once:
+void DrawPixels(float fPos, float count, CRGB color)
+{
+  // Calculate how much the first pixel will hold
+  float availFirstPixel = 1.0f - (fPos - (long)(fPos));
+  float amtFirstPixel = min(availFirstPixel, count);
+  float remaining = min(count, FastLED.size()-fPos);
+  int iPos = fPos;
+
+  // Blend (add) in the color of the first partial pixel
+
+  if (remaining > 0.0f)
+  {
+    FastLED.leds()[iPos++] += ColorFraction(color, amtFirstPixel);
+    remaining -= amtFirstPixel;
+  }
+
+  // Now draw any full pixels in the middle
+
+  while (remaining > 1.0f)
+  {
+    FastLED.leds()[iPos++] += color;
+    remaining--;
+  }
+
+  // Draw tail pixel, up to a single full pixel
+
+  if (remaining > 0.0f)
+  {
+    FastLED.leds()[iPos] += ColorFraction(color, remaining);
+  }
+}
+
+void DrawMarqueeComparison()
+{
+  static float scroll = 0.0f;
+  scroll += 0.1f;
+  if (scroll > 5.0)
+    scroll -= 5.0;
+
+  for (float i = scroll; i < NUM_LEDS/2 -1; i+= 5)
+  {
+    DrawPixels(i, 3, CRGB::Green);
+    DrawPixels(NUM_LEDS-1-(int)i, 3, CRGB::Red);
+  }
+}
+
+void setup() 
+{
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
 
   Serial.begin(115200);
   while (!Serial) { }
-  
   Serial.println("ESP32 Startup");
- 
+
   g_OLED.begin();
   g_OLED.clear();
   g_OLED.setFont(u8g2_font_profont15_tf);
- 
   g_lineHeight = g_OLED.getFontAscent() - g_OLED.getFontDescent();        // Descent is a negative number so we add it to the total
 
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(g_LEDs, NUM_LEDS);               // Add our LED strip to the FastLED library
-  FastLED.setBrightness(64);
-
+  FastLED.setBrightness(g_Brightness);
   set_max_power_indicator_LED(LED_BUILTIN);                               // Light the builtin LED if we power throttle
   FastLED.setMaxPowerInMilliWatts(g_PowerLimit);                          // Set the power limit, above which brightness will be throttled
 }
@@ -67,16 +107,10 @@ void loop() {
   // put your main code here, to run repeatedly: 
   while (true)
   {
-
     EVERY_N_MILLISECONDS(20)
     {
-      fadeToBlackBy(g_LEDs, NUM_LEDS, 64);
-      int cometSize = 15;
-      int iPos = beatsin16(32, 0, NUM_LEDS-cometSize);
-      byte hue = beatsin8(10);  // 60 = once per second it'll cycle through the colors. 10 seems to bee chaning the color at each end of the strip
-      // fill_solid(&g_LEDs[iPos], cometSize, CRGB::DarkViolet);
-      for (int i = iPos; i < iPos + cometSize; i++)
-        g_LEDs[i] = CHSV(hue, 255, 255); // CRGB::DarkViolet;
+      FastLED.clear();
+      DrawMarqueeComparison();
     }
 
     // Handle OLED drawing
@@ -93,6 +127,7 @@ void loop() {
     }
 
     FastLED.setBrightness(g_Brightness);  // Set the brightness scale
+    // FastLED.show();
     FastLED.delay(10);                    // Show and delay
   }
 }
