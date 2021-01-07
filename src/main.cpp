@@ -13,75 +13,16 @@
 CRGB g_LEDs[NUM_LEDS] = {0};  // Frame buffer for FastLED
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED_DATA);
-// U8G2_SSD1306_128X64_NONAME_F_SW_I2C g_OLED(U8G2_R2, OLED_CLOCK, OLED_DATA, OLED_RESET);
+
 int g_lineHeight = 0;
 int g_Brightness = 32; // 32;  // 0-255 brightness scale. do not go to big here, stay at 64 max;
-int g_PowerLimit = 900; // 900mW Power Limit
+int g_PowerLimit = 3000; // 3000 = 900mW Power Limit
 
-// #include "marquee.h"
-// #include "twinkle.h"
-// #include "comet.h"
-// #include "bounce.h"
-
-#define ARRAYSIZE(x) (sizeof(x)/sizeof(x[0]))             // Counts number of elements in a statically defined array
-#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)  // Should not be run more than 1000ms
-
-// FractionalColor
-//
-// Returns a fraction of a color; abstracts the fadeToBlack out to this function in case we 
-// want to improve the color math or do color correction all in one location at a later date.
-
-CRGB ColorFraction(CRGB colorIn, float fraction)
-{
-  fraction = min(1.0f, fraction);
-  return CRGB(colorIn).fadeToBlackBy(255 * (1.0f - fraction));
-}
-
-void DrawPixels(float fPos, float count, CRGB color)
-{
-  // Calculate how much the first pixel will hold
-  float availFirstPixel = 1.0f - (fPos - (long)(fPos));
-  float amtFirstPixel = min(availFirstPixel, count);
-  float remaining = min(count, FastLED.size()-fPos);
-  int iPos = fPos;
-
-  // Blend (add) in the color of the first partial pixel
-
-  if (remaining > 0.0f)
-  {
-    FastLED.leds()[iPos++] += ColorFraction(color, amtFirstPixel);
-    remaining -= amtFirstPixel;
-  }
-
-  // Now draw any full pixels in the middle
-
-  while (remaining > 1.0f)
-  {
-    FastLED.leds()[iPos++] += color;
-    remaining--;
-  }
-
-  // Draw tail pixel, up to a single full pixel
-
-  if (remaining > 0.0f)
-  {
-    FastLED.leds()[iPos] += ColorFraction(color, remaining);
-  }
-}
-
-void DrawMarqueeComparison()
-{
-  static float scroll = 0.0f;
-  scroll += 0.1f;
-  if (scroll > 5.0)
-    scroll -= 5.0;
-
-  for (float i = scroll; i < NUM_LEDS/2 -1; i+= 5)
-  {
-    DrawPixels(i, 3, CRGB::Green);
-    DrawPixels(NUM_LEDS-1-(int)i, 3, CRGB::Red);
-  }
-}
+#include "ledgfx.h"
+#include "comet.h"
+#include "marquee.h"
+#include "twinkle.h"
+#include "fire.h"
 
 void setup() 
 {
@@ -104,14 +45,23 @@ void setup()
 }
 
 void loop() {
-  // put your main code here, to run repeatedly: 
+  
+  //ClassicFireEffect fire(NUM_LEDS, 30, 100, 3, 2, false, true);   // Outwards from Middle
+  //ClassicFireEffect fire(NUM_LEDS, 30, 100, 3, 2, true, true);    // Inwards toward Middle
+  //ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, 4, true, false);     // Outwards from Zero
+  //ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, 4, false, false);     // Inwards from End
+  //ClassicFireEffect fire(NUM_LEDS, 50, 300, 30, 12, true, false);     // More Intense, Extra Sparking
+
+  //ClassicFireEffect fire(NUM_LEDS, 20, 200, 8, 8, true, true);     // Inwards from End, mirrored
+  //ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, NUM_LEDS, true, false);     // Fan with correct rotation  
+  ClassicFireEffect fire(NUM_LEDS, 50, 40, 5, NUM_LEDS, true, false);     // multiple sparks full
+  //ClassicFireEffect fire(NUM_LEDS, 50, 40, 5, 40, true, false);     // multiple sparks partial
+
   while (true)
   {
-    EVERY_N_MILLISECONDS(20)
-    {
-      FastLED.clear();
-      DrawMarqueeComparison();
-    }
+    FastLED.clear();
+    fire.DrawFire();
+    FastLED.show(g_Brightness);  // Show and delay
 
     // Handle OLED drawing
     EVERY_N_MILLISECONDS(250)
@@ -126,8 +76,7 @@ void loop() {
       g_OLED.sendBuffer();
     }
 
-    FastLED.setBrightness(g_Brightness);  // Set the brightness scale
-    // FastLED.show();
-    FastLED.delay(10);                    // Show and delay
+    delay(33);
+
   }
 }
