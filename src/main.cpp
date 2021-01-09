@@ -15,7 +15,7 @@ CRGB g_LEDs[NUM_LEDS] = {0};  // Frame buffer for FastLED
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C g_OLED(U8G2_R2, OLED_RESET, OLED_CLOCK, OLED_DATA);
 
 int g_lineHeight = 0;
-int g_Brightness = 32; // 32;  // 0-255 brightness scale. do not go to big here, stay at 64 max;
+int g_Brightness = 64; // 32;  // 0-255 brightness scale (not over 64). do not go to big here, stay at 64 max;
 int g_PowerLimit = 3000; // 3000 = 900mW Power Limit
 
 #include "ledgfx.h"
@@ -23,6 +23,7 @@ int g_PowerLimit = 3000; // 3000 = 900mW Power Limit
 #include "marquee.h"
 #include "twinkle.h"
 #include "fire.h"
+#include "bounce.h"
 
 void setup() 
 {
@@ -49,19 +50,37 @@ void loop() {
   //ClassicFireEffect fire(NUM_LEDS, 30, 100, 3, 2, false, true);   // Outwards from Middle
   //ClassicFireEffect fire(NUM_LEDS, 30, 100, 3, 2, true, true);    // Inwards toward Middle
   //ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, 4, true, false);     // Outwards from Zero
-  //ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, 4, false, false);     // Inwards from End
+  ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, 4, false, false);     // Inwards from End
   //ClassicFireEffect fire(NUM_LEDS, 50, 300, 30, 12, true, false);     // More Intense, Extra Sparking
 
   //ClassicFireEffect fire(NUM_LEDS, 20, 200, 8, 8, true, true);     // Inwards from End, mirrored
   //ClassicFireEffect fire(NUM_LEDS, 20, 100, 3, NUM_LEDS, true, false);     // Fan with correct rotation  
-  ClassicFireEffect fire(NUM_LEDS, 50, 40, 5, NUM_LEDS, true, false);     // multiple sparks full
   //ClassicFireEffect fire(NUM_LEDS, 50, 40, 5, 40, true, false);     // multiple sparks partial
+  
+  // ClassicFireEffect fire(NUM_LEDS, 50, 40, 5, NUM_LEDS, true, false);     // multiple sparks full
+
+  // Effect 3 - Bouncing Balls
+  // BouncingBallEffect balls(NUM_LEDS, 6, 48, false);
 
   while (true)
   {
+    // Effect 1 - Fire:
     FastLED.clear();
     fire.DrawFire();
     FastLED.show(g_Brightness);  // Show and delay
+
+    // Effect 2 - Rainbow night rider
+    // EVERY_N_MILLISECONDS(20)
+    // {
+    //   fadeToBlackBy(g_LEDs, NUM_LEDS, 64);
+    //   int cometSize = 15;
+    //   int iPos = beatsin16(32, 0, NUM_LEDS-cometSize);
+    //   byte hue = beatsin8(10);  // 60 = once per second it'll cycle through the colors. 10 seems to bee chaning the color at each end of the strip
+    //   // fill_solid(&g_LEDs[iPos], cometSize, CRGB::DarkViolet);
+    //   for (int i = iPos; i < iPos + cometSize; i++)
+    //     g_LEDs[i] = CHSV(hue, 255, 255); // CRGB::DarkViolet;
+    // }
+
 
     // Handle OLED drawing
     EVERY_N_MILLISECONDS(250)
@@ -76,7 +95,26 @@ void loop() {
       g_OLED.sendBuffer();
     }
 
-    delay(33);
+    // Effect 1 - Fire
+    // delay(33);
 
+    // Effect 2 - Rainbow night rider
+    // FastLED.setBrightness(g_Brightness);  // Set the brightness scale
+    // FastLED.delay(10);                    // Show and delay
+
+    // Effect 3 - Bouncing Balls
+    // balls.Draw();
+    // FastLED.setBrightness(g_Brightness);
+    // FastLED.show();
+
+    // Effect 4 - Rainbow Comet:
+    //  DrawComet();
+    //  FastLED.setBrightness(g_Brightness);
+    //  FastLED.show();
+
+    // Effect 5 - Twinkle
+    DrawTwinkle();
+    FastLED.setBrightness(g_Brightness);
+    FastLED.show();
   }
 }

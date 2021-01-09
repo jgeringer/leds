@@ -10,8 +10,8 @@ void DrawComet()
 
     const byte fadeAmt = 64;        // Fraction of 256 to fade pixel by if its chosen to be faded this pass
     const int cometSize = 5;        // Size of the comet in pixels
-    const int deltaHue = 4;         // How far to step the cycling hue each draw call
-    static double cometSpeed = 1; // How far to advance the coment every frame
+    const int deltaHue = 0;         // How far to step the cycling hue each draw call (0 = keep at red, 4 = cycle through rainbow every edge)
+    static double cometSpeed = 1;   // How far to advance the coment every frame
     static byte hue = HUE_RED;      // Current color
     static int iDirection = 1;      // Current direction (-1 or +1)
     static double iPos = 0.0;       // Current comet position on strip
